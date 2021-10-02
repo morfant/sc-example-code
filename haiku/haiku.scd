@@ -18,7 +18,7 @@ into the chestnut.
 */
 
 s.options.memSize;
-s.options.memSize_(8192*16)
+s.options.memSize_(8192*64)
 s.reboot;
 
 //Autumn moonlight-

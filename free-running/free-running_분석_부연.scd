@@ -32,8 +32,10 @@ s.meter.alwaysOnTop_(s)
 } ! 12;
 )
 
+
 // .product
 [6,2,12].product;
+
 
 // Pan2
 (
@@ -41,6 +43,7 @@ s.meter.alwaysOnTop_(s)
 		~makePulse.()
 	)
 ))
+
 
 // Pan2 + .product
 (
@@ -51,30 +54,58 @@ Pan2.ar((
 
 
 // https://ko.wikipedia.org/wiki/%EC%86%8C%EC%88%98_(%EC%88%98%EB%A1%A0)
-3.nthPrime;
+3.nthPrime; // 소수(prime number)를 얻는다
 
 
 
 
-
-SinOsc
-
+(// plot
+~freqDrift = { |freq=200| LFDNoise3.kr(0.2, 0.1, freq.cpsmidi).midicps }; // 주파수를 미세하게 랜덤하게 변화시킴 계속해서
+{
+~rootFreq = ~freqDrift.(26.midicps);
 
 ({ |k| // 0 ~ 15
 Pan2.ar(
 	({ |i| // 0 ~ ((k/2 + 1).asInteger - 1)
 				Pulse.ar(
-					i * k + 2 / (k + 1) * rootFreq * (i + 1) * 0.0625 * 16,
-					LinLin.ar(LFTri.ar(rootFreq * (i + 1) / 1024), -1, 1, 0.5, 0.95)
+					(i * k) + 2 / (k + 1) * ~rootFreq * (i + 1) * 0.0625 * 16, // freq of Pulse 
+					LinLin.ar(LFTri.ar(~rootFreq * (i + 1) / 1024), -1, 1, 0.5, 0.95) // width of Pulse
                     )} ! (k/2 + 1).asInteger).product // (k/2 + 1) 개의 인자를 가진 배열의 인자들 값을 모두 곱한 결과
-				* (k + 1).reciprocal
+	* (k + 1).reciprocal // / (k + 1)
 				* LinExp.ar(Blip.ar(
-					(k + 5).nthPrime.reciprocal * rootFreq * 0.125, 3), -1, 1, -48.dbamp, 1).neg,
+					(k + 5).nthPrime.reciprocal * ~rootFreq * 0.125, 3), -1, 1, -48.dbamp, 1).neg, // in of Pan2
 
-				LFTri.ar((k + 1).nthPrime * rootFreq / 256) // pos
+				LFTri.ar((k + 1).nthPrime * ~rootFreq / 256) // pos of Pan2
 			)
 } ! 16).sum
+}.plot(20)
+)
 
 
 
+// dup of Pan2
 Pan2.ar(({|i| i.postln} ! 6));
+
+
+(// Blip 의 변화 양상 관찰 
+~freqDrift = { |freq=200| LFDNoise3.kr(0.2, 0.1, freq.cpsmidi).midicps }; // 주파수를 미세하게 랜덤하게 변화시킴 계속해서
+{
+	var sig;
+	~rootFreq = ~freqDrift.(26.midicps);
+	sig = Blip.kr(8.nthPrime.reciprocal * ~rootFreq * 0.125, 3 );
+	// Blip.kr(5.nthPrime.reciprocal * ~rootFreq * 0.125, 6 );
+	sig = LinExp.kr(sig, -1, 1, -48.dbamp, 1);
+	sig = sig.neg;
+}.plot(10)
+)
+
+
+// .neg : 음수로 만든다
+0.125.neg;
+-1.neg;
+
+
+
+
+
+

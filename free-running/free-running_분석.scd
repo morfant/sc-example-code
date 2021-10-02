@@ -1,7 +1,9 @@
 ( // http://sccode.org/1-4TU
 /*
+<New-Metal Mistress Time>
+A free-running oscillator piece. I was hoping the three elements had enough code in common that I could make an elegant generator for them, but not so.
+*/
 
-	*/
 var duration = 60 * 5; // 300
 var freqDrift = { |freq=200| LFDNoise3.ar(0.2, 0.1, freq.cpsmidi).midicps }; // 주파수를 미세하게 랜덤하게 변화시킴 계속해서
 var masterVolume = -2.dbamp; 
@@ -21,8 +23,8 @@ play {
 					LinLin.ar(LFTri.ar(rootFreq * (i + 1) / 1024), -1, 1, 0.5, 0.95) // 'width' of Pulse
 				)} ! (k/2 + 1).asInteger).product // Pulse 신호 배열에 대한 Pan2 + .product 는 내부 신호가 곱해진 스테레오 신호가 됨.
 			* (k + 1).reciprocal // = / (k+1) ==> k가 커질 수록 큰 수로 나누게 된다.
-				* LinExp.ar(Blip.ar( // Blip을 이용하여 input의 음량 결정하는 이유는?
-				(k + 5).nthPrime.reciprocal * rootFreq * 0.125, 3), -1, 1, -48.dbamp, 1).neg, // 'in' of Pan2
+				* LinExp.ar(Blip.ar( // Blip을 이용하여 input의 음량 결정하는 이유는? ==> 주기적으로 커졌다 작아졌다 하는 형태를 만들 수 있다.
+				(k + 5).nthPrime.reciprocal * rootFreq * 0.125, 3), -1, 1, -48.dbamp, 1).neg, // 'in' of Pan2 .neg의 유무는 들었을 때는 크게 영향이 없다.
 
 			LFTri.ar((k + 1).nthPrime * rootFreq / 256) // 'pos' of Pan2
 			)
