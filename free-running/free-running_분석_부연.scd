@@ -58,7 +58,6 @@ Pan2.ar((
 
 
 
-
 (// plot
 ~freqDrift = { |freq=200| LFDNoise3.kr(0.2, 0.1, freq.cpsmidi).midicps }; // 주파수를 미세하게 랜덤하게 변화시킴 계속해서
 {
@@ -105,7 +104,94 @@ Pan2.ar(({|i| i.postln} ! 6));
 -1.neg;
 
 
+// Blip : freq 에 정해진 주파수의 배음들을 만들어 내는 UGen. sampleRate안의 모든 주파수 배음들을 만들어 내면 Impulse와 같아진다. 그러나 Band-limited
+{Impulse.ar(10)}.plot(1)
+{Impulse.ar(1)}.play;
+{Blip.ar(1, 2)}.plot(1)
+{Blip.ar(8, s.sampleRate/2)}.play;
 
 
+// UGen의 phase 파라메터에 GVerb를 사용한 것의 효과 - 2ch, 랜덤한 느낌, 피드백...
+{GVerb.ar(Pulse.ar())}.plot;
+{(Pulse.ar())}.plot;
+
+{SinOsc.ar(400, GVerb.ar(Pulse.ar() * Blip.ar(3, 3).neg))}.play;
+{SinOsc.ar(400, (Pulse.ar() * Blip.ar(3, 3).neg))}.play;
+{SinOsc.ar(400, GVerb.ar(Pulse.ar()))}.play;
+{SinOsc.ar(400, (LFPulse.ar()))}.play;
 
 
+// LeakDC
+{SinOsc.ar(1)}.plot(2)
+{LeakDC.ar(SinOsc.ar(1))}.plot(2); //coef가 1에 가까울 수록 원래 신호와 비슷한 형태를 유지한다 
+
+
+// Lag
+{Lag.ar(Line.ar(0.0, 1.0, 1.0), 1.0)}.plot(1)
+
+// LinLin : 출력값의 범위를 변경하는 기능
+{LinLin.ar(LFTri.ar(1), -1, 1, 3, 13)}.plot(1);
+
+
+// f_1과 f_2가 같은 경우, 다른 경우를 비교해 보자.
+(
+{
+	var f_1 = 5;
+	var f_2 = 3;
+	var sig_1 = LinLin.ar(LFTri.ar(f_1), -1, 1, 3, 13).floor;
+	var sig_2 = LinLin.ar(LFTri.ar(f_2), -1, 1, 13, 3).floor;
+	(sig_1 / sig_2);
+	// Lag.ar(sig_1 / sig_2, 0.25); // Lag을 사용하면 자잘한 차이들을 부드럽게 만든다.
+}.plot(5)
+)
+
+
+// LFTri 의 iphase 값 비교
+(
+{{|i|
+	LFTri.ar(1, i)
+}!4}.plot(1)
+)
+
+(
+{[
+	LFTri.ar(1, 0),
+	LFTri.ar(1, 1),
+	LFTri.ar(1, 2),
+	LFTri.ar(1, 3),
+	LFTri.ar(1, 4),
+]}.plot(1)
+)
+
+
+// AmpComA : A-weight 함수를 통한 보상
+// 등청감곡선에 의해 주파수에 따른 인지의 차이를 균등하게 맞추려는 시도
+// FreqScope의 dbCut을 36db로 셋팅하고 마우스를 움직여 0, 1 각bus의 음량 변화의 추이를 관찰할 것
+(
+{
+    var freq;
+    freq = MouseX.kr(100, 20000, 0);
+    [
+		SinOsc.ar(freq) * AmpCompA.kr(freq), // A-weight 보상
+    	SinOsc.ar(freq)
+	] * 0.3;
+}.play;
+)
+
+// 10 ~ 100 구간과 100 ~ 10000 구간에서의 필터링 값 비교
+// https://community.sw.siemens.com/s/article/what-is-a-weighting
+// 위 링크의 fig.4 와 비교해서 관찰 할 것
+{ AmpCompA.ar(Line.ar([10, 1000], [100, 10000], 1))}.plot(1.0);
+
+
+// make WhiteNoise with SinOsc(s)
+// 그러나 AmpCompA가 예상대로 작동하지는 않음
+s.options.memSize;
+s.options.memSize = 8192 * 2 * 2;
+s.reboot;
+(
+{
+Mix.fill(s.sampleRate/2, {|i| AmpCompA.ir(i) * 0.01 * SinOsc.ar(rrand(1, s.sampleRate/2))});
+// Mix.fill(s.sampleRate/2, {|i| SinOsc.ar(rrand(1, s.sampleRate/2), mul: 0.001)});
+}.play;
+)
